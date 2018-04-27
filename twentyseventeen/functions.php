@@ -17,6 +17,8 @@ if ( version_compare( $GLOBALS['wp_version'], '4.7-alpha', '<' ) ) {
 	return;
 }
 
+include( 'drive-functions.php' );
+
 /**
  * Sets up theme defaults and registers support for various WordPress features.
  *
