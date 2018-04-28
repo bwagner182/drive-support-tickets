@@ -36,7 +36,7 @@ function wpas_drive_custom_fields() {
 			// 'sanitize'       => wpas_sanitize_due_date(),
 			'html5_pattern'   => '(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d',
 			'backend_only'    => true,
-			'capability'      => 'delete_ticket',
+			'capability'      => 'edit_ticket',
 		);
 		wpas_add_custom_field( 'due_date', $due_date_args );
 
