@@ -1,7 +1,7 @@
 <?php
 /**
  * Added extensions and fields to extend the funtionality of Awesome support.
- * 
+ *
  * @package   Drive Support Extensions
  * @author    Bret Wagner <bwagner@drivestl.com>
  * @license   GPL-2.0+
@@ -28,15 +28,15 @@ function wpas_drive_custom_fields() {
 		$due_date_args = array(
 			'title'           => __( 'Due Date', 'awesome_support' ),
 			'field_type'      => 'date-field',
-			'placeholder'     => strtotime( '+2 weeks' ),
-			'default'         => strtotime( '+2 weeks' ),
+			// 'default'         => strtotime( '+2 weeks' ),
+			'required'        => false,
 			'log'             => true,
 			'show_column'     => true,
 			'sortable_column' => true,
 			// 'sanitize'       => wpas_sanitize_due_date(),
 			'html5_pattern'   => '(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d',
 			'backend_only'    => true,
-			'capability'      => 'Support Manager',
+			'capability'      => 'delete_ticket',
 		);
 		wpas_add_custom_field( 'due_date', $due_date_args );
 
@@ -44,7 +44,7 @@ function wpas_drive_custom_fields() {
 			'title'              => __( 'Page URL', 'awesome_support' ),
 			'field_type'         => 'url',
 			'placeholder'        => 'https://example.com/page-name/',
-			'required'           => true,
+			'required'           => false,
 			'show_column'        => false,
 			'desc'               => __( 'Please enter the url for the page that needs editing.', 'awesome_support' ),
 			'show_frontend_list' => false,
