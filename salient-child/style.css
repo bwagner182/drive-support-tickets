@@ -1,0 +1,29 @@
+/*
+Theme Name: Salient Child Theme
+Theme URI: http: //mysite.com/
+Description: This is a custom child theme for Salient
+Author: My Name
+Author URI: http: //mysite.com/
+Template: salient
+Version: 0.1
+*/
+
+
+.wpas code {
+	clear: none;
+	display: inline;
+	padding: 0;
+	background-color: transparent;
+}
+
+.wpas input[type="text"], .wpas input[type="url"], .wpas input[type="email"], .wpas input[type="password"], .wpas input[type="tel"] {
+	background-color: #fff;
+}
+
+body:not(.woocommerce-cart) .main-content table tr:nth-child(2n) {
+    background-color: rgba(0,162,237,.1);
+}
+
+.wpas-form-control {
+	height: auto;
+}
