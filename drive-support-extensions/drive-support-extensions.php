@@ -121,8 +121,6 @@ function drive_custom_user_fields( $user ) {
 	// Register meta field if it doesn't exist.
 	if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
 		add_user_meta( $user->ID, 'project-manager', '' );
-	} else {
-		$selected = get_user_meta( $user->ID, 'project-manager' );
 	}
 	?>
 	<h3><?php esc_html_e( "Drive Client Fields" ); ?></h3>
@@ -132,12 +130,15 @@ function drive_custom_user_fields( $user ) {
 			<th><label for="project-manager"><?php esc_html_e( "Project Manager" ); ?></label></th>
 			<td>
 				<select name="project-manager">
-					<?php $managers = drive_get_support_managers() ?>
 					<option value=""></option>
 					<?php
+						$managers = drive_get_support_managers();
+						$selected = get_user_meta( $user->ID, 'project-manager' )[0];
+						drive_write_error_log( "Selected PM ID is: " );
+						drive_write_error_log( $selected );
 						foreach ( $managers as $manager ) {
 							?>
-							<option value="<?php echo $manager->user_login; ?>" <?php if ( $manager->user_login === $selected ) { echo "selected"; } ?>><?php echo $manager->user_login; ?></option>
+							<option value="<?php echo $manager->ID; ?>" <?php if ( $manager->ID === $selected ) { echo "selected=''"; } ?>><?php echo $manager->user_login; ?></option>
 							<?php
 						}
 					?>
@@ -171,7 +172,7 @@ add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
 
 /**
  * Get a list of the support managers from the database.
- * @return [type] [description]
+ * @return array List of User IDs and their usernames.
  */
 function drive_get_support_managers() {
 	global $wpdb;
@@ -182,3 +183,38 @@ function drive_get_support_managers() {
 		AND m.meta_value LIKE '%wpas_support_manager%'", OBJECT_K );
 	return $results;
 }
+
+/**
+ * Set project manager for client on ticket submission.
+ * @param  int     $ticket_id ID of the ticket being created.
+ * @return boolean            True on success.
+ */
+function drive_set_project_manager( $ticket_id ) {
+	drive_write_error_log( "Starting drive_set_project_manager" );
+	drive_write_error_log( "Ticket ID: " . $ticket_id );
+	global $wpdb;
+	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
+	$result = $wpdb->get_results( $query, OBJECT )[0];
+
+	drive_write_error_log( "We have the ticket client: " . $result->post_author );
+	if ( !$result ) {
+		return false;
+	}
+
+	$author = $result->post_author;
+
+	drive_write_error_log( "Getting PM from usermeta." );
+	$pm = get_user_meta( $author, 'project-manager', true );
+	drive_write_error_log( "PM is " . $pm );
+	drive_write_error_log( "Writing to the db" );
+	$result = $wpdb->insert( $wpdb->postmeta, array(
+		'post_id'    => $ticket_id,
+		'meta_key'   => '_wpas_secondary_assignee',
+		'meta_value' => $pm,
+	) );
+	drive_write_error_log( $result ? "success" : "failed" );
+	drive_write_error_log( "Finished writing to db" );
+	return $result;
+}
+
+add_action( 'wpas_insert_ticket', 'drive_set_project_manager', 20, 1);
