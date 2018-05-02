@@ -81,19 +81,10 @@ function wpas_drive_custom_fields() {
 function drive_set_due_date( $new_status, $old_status, $post ) {
 	// Check to make sure it's a new ticket
 	if ( ( 'publish' === $new_status && 'publish' === $old_status ) || 'ticket' !== $post->post_type ) {
+		// Not a ticket or not new.
 		return false;
 	}
 
-/*
-	if ( wp_is_post_revision( $post->ID ) ) {
-		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-		drive_write_error_log( "This is a revision." );
-		return;
-	}
-
-	drive_write_error_log( "DRIVE EXTENSIIONS LOG" );
-	drive_write_error_log( "This post is not a revision. Continuing..." );
-*/
 	global $wpdb;
 	// Check for a due date.
 	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = " . $post->ID );
