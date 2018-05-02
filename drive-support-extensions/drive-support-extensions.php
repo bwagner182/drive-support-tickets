@@ -71,13 +71,16 @@ function wpas_drive_custom_fields() {
 	}
 }
 
+/**
+ * set deault due date for 2 weeks away when submitted by the client
+ * @param  string $new_status Status of the post after submission.
+ * @param  string $old_status Status of the post prior to submission.
+ * @param  object $post       Post object after submission.
+ * @return boolean            Returns true on completion.
+ */
 function drive_set_due_date( $new_status, $old_status, $post ) {
-	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-	drive_write_error_log( "Attempting to set due date on ticket id " . $post->ID );
-
 	// Check to make sure it's a new ticket
 	if ( ( 'publish' === $new_status && 'publish' === $old_status ) || 'ticket' !== $post->post_type ) {
-		drive_write_error_log( "Death" );
 		return false;
 	}
 
@@ -92,22 +95,18 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 	drive_write_error_log( "This post is not a revision. Continuing..." );
 */
 	global $wpdb;
+	// Check for a due date.
 	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = " . $post->ID );
 
 	if ( $result ) {
-		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-		drive_write_error_log( "This ticket already has a due date. Ticket ID " . $post->ID );
-		return;
+		// Ticket has a due date.
+		return false;
 	}
-	$today = date( "Y-m-d" );
-	$two_weeks = time() + ( 14 * 24 * 60 * 60 );
-	$due_date = date( 'Y-m-d', $two_weeks );
-/*
-	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-	drive_write_error_log( "Today is " . $today );
-	drive_write_error_log( "Two weeks is " . $two_weeks );
-	drive_write_error_log( "The new due date is: " . $due_date );
-*/
+
+	// Set due date for two weeks from today.
+	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
+
+	// Insert new due date into database.
 	$result = $wpdb->insert(
 		$wpdb->postmeta,
 		array(
@@ -117,8 +116,6 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 		)
 	);
 
-	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-	drive_write_error_log( "Result of insert: " . $result );
 	return $result;
 }
 
