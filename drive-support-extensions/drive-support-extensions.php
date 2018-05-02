@@ -20,6 +20,24 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  */
 
+/**
+ * Log an error to the WordPress debug log.
+ *
+ * @since  0.1
+ *
+ * @param  string $message What we want to say in the entry.
+ * @return void            No return, writes an entry on the log.
+ */
+function drive_write_error_log( $message ) {
+	if ( true === WP_DEBUG ) {
+		if ( is_array( $message ) || is_object( $message ) ) {
+			error_log( print_r( $message, true ) );
+		} else {
+			error_log( $message );
+		}
+	}
+}
+
 add_action( 'plugins_loaded', 'wpas_drive_custom_fields' );
 
 /** Create custom fields for use in Awesome Support Plugin. */
@@ -54,18 +72,27 @@ function wpas_drive_custom_fields() {
 }
 
 function drive_set_due_date( $post_id ) {
+	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
+	drive_write_error_log( "Attempting to set due date on ticket id " . $post_id );
 	if ( wp_is_post_revision( $post_id ) ) {
+		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
+		drive_write_error_log( "This is a revision." );
 		return;
 	}
+
+	drive_write_error_log( "DRIVE EXTENSIIONS LOG" );
+	drive_write_error_log( "This post is not a revision. Continuing..." );
 
 	global $wpdb;
 	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = %d", $post_id );
 
 	if ( $result ) {
+		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
+		drive_write_error_log( "This ticket already has a due date. Ticket ID " . $post_id );
 		return;
 	}
 
-	return $wpdb->insert(
+	$result = $wpdb->insert(
 		$wpdb->postmeta,
 		array(
 			'post_id'    => $post_id,
@@ -73,6 +100,10 @@ function drive_set_due_date( $post_id ) {
 			'meta_value' => $due_date,
 		)
 	);
+
+	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
+	drive_write_error_log( "Result of insert: " . $result );
+	return $result;
 }
 
 add_action( 'publish_ticket', 'drive_set_due_date' );
