@@ -119,12 +119,16 @@ add_action( 'transition_post_status', 'drive_set_due_date', 20, 3 );
  */
 function drive_custom_user_fields( $user ) {
 	// Register meta field if it doesn't exist.
-	if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
-		add_user_meta( $user->ID, 'project-manager', '' );
-	}
+	drive_write_error_log( "DRIVE LOG" );
+	drive_write_error_log( $user );
+	if ( 'add-new-user' !== $user ) {
+		if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
+			add_user_meta( $user->ID, 'project-manager', '' );
+		}
 
-	if ( ! get_user_meta( $user->ID, 'company-name' ) ) {
-		add_user_meta( $user->ID, 'company-name', '' );
+		if ( ! get_user_meta( $user->ID, 'company-name' ) ) {
+			add_user_meta( $user->ID, 'company-name', '' );
+		}
 	}
 	?>
 	<h3><?php esc_html_e( "Drive Client Fields" ); ?></h3>
