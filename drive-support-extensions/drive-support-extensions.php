@@ -71,10 +71,13 @@ function wpas_drive_custom_fields() {
 	}
 }
 
-function drive_set_due_date( $post_id ) {
+function drive_set_due_date( $new_status, $old_status, $post ) {
 	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-	drive_write_error_log( "Attempting to set due date on ticket id " . $post_id );
-	if ( wp_is_post_revision( $post_id ) ) {
+	drive_write_error_log( "Attempting to set due date on ticket id " . $post->ID );
+
+	if ( 'publish' === $new_status && 'publish' !== $old_status && $post->post_type )
+
+	if ( wp_is_post_revision( $post->ID ) ) {
 		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 		drive_write_error_log( "This is a revision." );
 		return;
@@ -84,18 +87,21 @@ function drive_set_due_date( $post_id ) {
 	drive_write_error_log( "This post is not a revision. Continuing..." );
 
 	global $wpdb;
-	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = %d", $post_id );
+	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = %s", $post->ID );
 
 	if ( $result ) {
 		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
-		drive_write_error_log( "This ticket already has a due date. Ticket ID " . $post_id );
+		drive_write_error_log( "This ticket already has a due date. Ticket ID " . $post->ID );
 		return;
 	}
 
+	$due_date = strtotime( '+2 weeks', date( "d/m/Y" ) );
+	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
+	drive_write_error_log( "The new due date is: " . $due_date );
 	$result = $wpdb->insert(
 		$wpdb->postmeta,
 		array(
-			'post_id'    => $post_id,
+			'post_id'    => $post->ID,
 			'meta_key'   => '_wpas_due_date',
 			'meta_value' => $due_date,
 		)
@@ -106,4 +112,4 @@ function drive_set_due_date( $post_id ) {
 	return $result;
 }
 
-add_action( 'publish_ticket', 'drive_set_due_date' );
+add_action( 'transition_post_status', 'drive_set_due_date', 20, 3 );
