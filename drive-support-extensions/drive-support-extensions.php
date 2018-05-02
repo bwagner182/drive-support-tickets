@@ -190,30 +190,25 @@ function drive_get_support_managers() {
  * @return boolean            True on success.
  */
 function drive_set_project_manager( $ticket_id ) {
-	drive_write_error_log( "Starting drive_set_project_manager" );
-	drive_write_error_log( "Ticket ID: " . $ticket_id );
+	
 	global $wpdb;
 	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
 	$result = $wpdb->get_results( $query, OBJECT )[0];
 
-	drive_write_error_log( "We have the ticket client: " . $result->post_author );
 	if ( !$result ) {
 		return false;
 	}
 
 	$author = $result->post_author;
 
-	drive_write_error_log( "Getting PM from usermeta." );
 	$pm = get_user_meta( $author, 'project-manager', true );
-	drive_write_error_log( "PM is " . $pm );
-	drive_write_error_log( "Writing to the db" );
+
 	$result = $wpdb->insert( $wpdb->postmeta, array(
 		'post_id'    => $ticket_id,
 		'meta_key'   => '_wpas_secondary_assignee',
 		'meta_value' => $pm,
 	) );
-	drive_write_error_log( $result ? "success" : "failed" );
-	drive_write_error_log( "Finished writing to db" );
+
 	return $result;
 }
 
