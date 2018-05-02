@@ -54,7 +54,7 @@ function wpas_drive_custom_fields() {
 			// 'sanitize'       => wpas_sanitize_due_date(),
 			// 'html5_pattern'   => '(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d',
 			'backend_only'    => true,
-			'capability'      => 'edit_ticket',
+			'capability'      => 'wpas_agent',
 		);
 		wpas_add_custom_field( 'due_date', $due_date_args );
 
@@ -122,6 +122,10 @@ function drive_custom_user_fields( $user ) {
 	if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
 		add_user_meta( $user->ID, 'project-manager', '' );
 	}
+
+	if ( ! get_user_meta( $user->ID, 'company-name' ) ) {
+		add_user_meta( $user->ID, 'company-name', '' );
+	}
 	?>
 	<h3><?php esc_html_e( "Drive Client Fields" ); ?></h3>
 
@@ -133,9 +137,7 @@ function drive_custom_user_fields( $user ) {
 					<option value=""></option>
 					<?php
 						$managers = drive_get_support_managers();
-						$selected = get_user_meta( $user->ID, 'project-manager' )[0];
-						drive_write_error_log( "Selected PM ID is: " );
-						drive_write_error_log( $selected );
+						$selected = get_user_meta( $user->ID, 'project-manager', true );
 						foreach ( $managers as $manager ) {
 							?>
 							<option value="<?php echo $manager->ID; ?>" <?php if ( $manager->ID === $selected ) { echo "selected=''"; } ?>><?php echo $manager->user_login; ?></option>
@@ -143,6 +145,22 @@ function drive_custom_user_fields( $user ) {
 						}
 					?>
 				</select>
+			</td>
+		</tr>
+		<tr>
+			<th><label for="developer-name"><?php esc_html_e( "Developer Name" ); ?></label></th>
+			<td>
+				<select name="developer-name">
+					<option value=''></option>
+					<?php
+					$agents = drive_get_support_agents();
+					$selected_dev = get_user_meta( $user->ID, 'developer-name', true );
+					foreach ($agents as $agent ) {
+						?>
+						<option value="<?php echo $agent->ID; ?>" <?php if ( $agent->ID === $selected_dev) { echo "selected=''"; } ?>><?php echo $agent->user_login; ?></option>
+						<?php
+					}
+					?>
 			</td>
 		</tr>
 	</table>
@@ -164,6 +182,7 @@ function drive_save_custom_user_fields( $user_id ) {
 	}
 
 	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
+	update_user_meta( $user_id, 'developer-name', $_POST['developer-name'] );
 }
 
 add_action( 'user_register', 'drive_save_custom_user_fields' );
@@ -217,3 +236,50 @@ function drive_set_project_manager( $ticket_id ) {
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
+
+
+/**
+ * Get a list of the support agents from the database.
+ * @return array List of User IDs and their usernames.
+ */
+function drive_get_support_agents() {
+	global $wpdb;
+	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
+		FROM wp_users u, wp_usermeta m
+		WHERE u.ID = m.user_id
+		AND m.meta_key LIKE 'wp_capabilities'
+		AND m.meta_value LIKE '%wpas_agent%'", OBJECT_K );
+	return $results;
+}
+
+/**
+ * Set developer for client on ticket submission.
+ * @param  int     $ticket_id ID of the ticket being created.
+ * @return boolean            True on success.
+ */
+function drive_set_developer( $ticket_id ) {
+	
+	// Grab ticket data from database.
+	global $wpdb;
+	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
+	$result = $wpdb->get_results( $query, OBJECT )[0];
+
+	if ( !$result ) {
+		// Ticket doesn't exist.
+		return false;
+	}
+
+	$author = $result->post_author;
+
+	// Get assigned PM from client.
+	$dev_name = get_user_meta( $author, 'developer-name', true );
+
+	// Insert assigned PM to ticket.
+	$result = $wpdb->insert( $wpdb->postmeta, array(
+		'post_id'    => $ticket_id,
+		'meta_key'   => '_wpas_assignee',
+		'meta_value' => $dev_name,
+	) );
+
+	return $result;
+}
