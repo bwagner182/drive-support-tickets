@@ -112,6 +112,11 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 
 add_action( 'transition_post_status', 'drive_set_due_date', 20, 3 );
 
+/**
+ * Add custom meta fields for users.
+ * @param  object $user User object from WordPress database.
+ * @return void         Outputs html to build the fields.
+ */
 function drive_custom_user_fields( $user ) {
 	// Register meta field if it doesn't exist.
 	if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
@@ -147,6 +152,11 @@ add_action( 'user_new_form', 'drive_custom_user_fields' );
 add_action( 'show_user_profile', 'drive_custom_user_fields' );
 add_action( 'edit_user_profile', 'drive_custom_user_fields' );
 
+/**
+ * Save custom meta fields.
+ * @param  int     $user_id User ID in the database.
+ * @return boolean          True on success.
+ */
 function drive_save_custom_user_fields( $user_id ) {
 	if ( !current_user_can( 'edit_user', $user_id ) ) {
 		return false;
@@ -166,9 +176,9 @@ add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
 function drive_get_support_managers() {
 	global $wpdb;
 	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
-FROM wp_users u, wp_usermeta m
-WHERE u.ID = m.user_id
-AND m.meta_key LIKE 'wp_capabilities'
-AND m.meta_value LIKE '%wpas_support_manager%'", OBJECT_K );
+		FROM wp_users u, wp_usermeta m
+		WHERE u.ID = m.user_id
+		AND m.meta_key LIKE 'wp_capabilities'
+		AND m.meta_value LIKE '%wpas_support_manager%'", OBJECT_K );
 	return $results;
 }
