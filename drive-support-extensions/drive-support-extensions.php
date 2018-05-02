@@ -136,6 +136,7 @@ function drive_custom_user_fields( $user ) {
 	<?
 }
 
+add_action( 'user_new_form', 'drive_custom_user_fields' );
 add_action( 'show_user_profile', 'drive_custom_user_fields' );
 add_action( 'edit_user_profile', 'drive_custom_user_fields' );
 
@@ -147,5 +148,6 @@ function drive_save_custom_user_fields( $user_id ) {
 	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
 }
 
+add_action( 'user_register', 'drive_save_custom_user_fields' );
 add_action( 'personal_options_update', 'drive_save_custom_user_fields' );
 add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
