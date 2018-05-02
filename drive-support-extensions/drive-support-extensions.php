@@ -75,11 +75,13 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 	drive_write_error_log( "Attempting to set due date on ticket id " . $post->ID );
 
+	// Check to make sure it's a new ticket
 	if ( ( 'publish' === $new_status && 'publish' === $old_status ) || 'ticket' !== $post->post_type ) {
 		drive_write_error_log( "Death" );
 		return false;
 	}
 
+/*
 	if ( wp_is_post_revision( $post->ID ) ) {
 		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 		drive_write_error_log( "This is a revision." );
@@ -88,7 +90,7 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 
 	drive_write_error_log( "DRIVE EXTENSIIONS LOG" );
 	drive_write_error_log( "This post is not a revision. Continuing..." );
-
+*/
 	global $wpdb;
 	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = " . $post->ID );
 
@@ -100,10 +102,12 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 	$today = date( "m/d/Y" );
 	$two_weeks = time() + ( 14 * 24 * 60 * 60 );
 	$due_date = date( 'm/d/Y', $two_weeks );
+/*
 	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 	drive_write_error_log( "Today is " . $today );
 	drive_write_error_log( "Two weeks is " . $two_weeks );
 	drive_write_error_log( "The new due date is: " . $due_date );
+*/
 	$result = $wpdb->insert(
 		$wpdb->postmeta,
 		array(
