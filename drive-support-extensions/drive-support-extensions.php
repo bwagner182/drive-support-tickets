@@ -217,4 +217,4 @@ function drive_set_project_manager( $ticket_id ) {
 	return $result;
 }
 
-add_action( 'wpas_insert_ticket', 'drive_set_project_manager', 20, 1);
+add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
