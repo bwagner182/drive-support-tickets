@@ -116,6 +116,8 @@ function drive_custom_user_fields( $user ) {
 	// Register meta field if it doesn't exist.
 	if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
 		add_user_meta( $user->ID, 'project-manager', '' );
+	} else {
+		$selected = get_user_meta( $user->ID, 'project-manager' );
 	}
 	?>
 	<h3><?php esc_html_e( "Drive Client Fields" ); ?></h3>
@@ -125,10 +127,15 @@ function drive_custom_user_fields( $user ) {
 			<th><label for="project-manager"><?php esc_html_e( "Project Manager" ); ?></label></th>
 			<td>
 				<select name="project-manager">
-					<?php // drive_get_support_managers() ?>
+					<?php $managers = drive_get_support_managers() ?>
 					<option value=""></option>
-					<option value="Emily Giegling" <?php if ( 'Emily Giegling' === get_user_meta( $user->ID, 'project-manager', true ) ) { echo 'selected'; } ?> >Emily Giegling</option>
-					<option value="Mark Roche" <?php if ( 'Mark Roche' === get_user_meta( $user->ID, 'project-manager', true ) ) { echo 'selected'; } ?> >Mark Roche</option>
+					<?php
+						foreach ( $managers as $manager ) {
+							?>
+							<option value="<?php echo $manager->user_login; ?>" <?php if ( $manager->user_login === $selected ) { echo "selected"; } ?>><?php echo $manager->user_login; ?></option>
+							<?php
+						}
+					?>
 				</select>
 			</td>
 		</tr>
@@ -151,3 +158,17 @@ function drive_save_custom_user_fields( $user_id ) {
 add_action( 'user_register', 'drive_save_custom_user_fields' );
 add_action( 'personal_options_update', 'drive_save_custom_user_fields' );
 add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
+
+/**
+ * Get a list of the support managers from the database.
+ * @return [type] [description]
+ */
+function drive_get_support_managers() {
+	global $wpdb;
+	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
+FROM wp_users u, wp_usermeta m
+WHERE u.ID = m.user_id
+AND m.meta_key LIKE 'wp_capabilities'
+AND m.meta_value LIKE '%wpas_support_manager%'", OBJECT_K );
+	return $results;
+}
