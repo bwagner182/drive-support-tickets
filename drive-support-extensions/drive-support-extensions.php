@@ -59,19 +59,20 @@ function drive_set_due_date( $post_id ) {
 	}
 
 	global $wpdb;
-	$query   = $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE post_id = %d AND meta_key = '_wpas_due_date'", $post_id );
-	$results = $wpdb->get_results( $query, OBJECT );
-	if ( $results ) {
-		return false;
+	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = %d", $post_id );
+
+	if ( $result ) {
+		return;
 	}
 
-	$due_date = strtotime( '+2 weeks' );
-
-	return $wpdb->insert( $wpdb->postmeta, array(
-		'post_id'    => $post_id,
-		'meta_key'   => '_wpas_due_date',
-		'meta_value' => $due_date,
-	) );
+	return $wpdb->insert(
+		$wpdb->postmeta,
+		array(
+			'post_id'    => $post_id,
+			'meta_key'   => '_wpas_due_date',
+			'meta_value' => $due_date,
+		)
+	);
 }
 
 add_action( 'publish_ticket', 'drive_set_due_date' );
