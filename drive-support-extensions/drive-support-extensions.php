@@ -99,9 +99,9 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 		drive_write_error_log( "This ticket already has a due date. Ticket ID " . $post->ID );
 		return;
 	}
-	$today = date( "m/d/Y" );
+	$today = date( "Y-m-d" );
 	$two_weeks = time() + ( 14 * 24 * 60 * 60 );
-	$due_date = date( 'm/d/Y', $two_weeks );
+	$due_date = date( 'Y-m-d', $two_weeks );
 /*
 	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 	drive_write_error_log( "Today is " . $today );
