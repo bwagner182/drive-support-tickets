@@ -111,3 +111,41 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 }
 
 add_action( 'transition_post_status', 'drive_set_due_date', 20, 3 );
+
+function drive_custom_user_fields( $user ) {
+	// Register meta field if it doesn't exist.
+	if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
+		add_user_meta( $user->ID, 'project-manager', '' );
+	}
+	?>
+	<h3><?php esc_html_e( "Drive Client Fields" ); ?></h3>
+
+	<table class="form-table">
+		<tr>
+			<th><label for="project-manager"><?php esc_html_e( "Project Manager" ); ?></label></th>
+			<td>
+				<select name="project-manager">
+					<?php // drive_get_support_managers() ?>
+					<option value=""></option>
+					<option value="Emily Giegling" <?php if ( 'Emily Giegling' === get_user_meta( $user->ID, 'project-manager', true ) ) { echo 'selected'; } ?> >Emily Giegling</option>
+					<option value="Mark Roche" <?php if ( 'Mark Roche' === get_user_meta( $user->ID, 'project-manager', true ) ) { echo 'selected'; } ?> >Mark Roche</option>
+				</select>
+			</td>
+		</tr>
+	</table>
+	<?
+}
+
+add_action( 'show_user_profile', 'drive_custom_user_fields' );
+add_action( 'edit_user_profile', 'drive_custom_user_fields' );
+
+function drive_save_custom_user_fields( $user_id ) {
+	if ( !current_user_can( 'edit_user', $user_id ) ) {
+		return false;
+	}
+
+	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
+}
+
+add_action( 'personal_options_update', 'drive_save_custom_user_fields' );
+add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
