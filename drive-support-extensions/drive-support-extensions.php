@@ -52,3 +52,26 @@ function wpas_drive_custom_fields() {
 		wpas_add_custom_field( 'page_url', $url_args );
 	}
 }
+
+function drive_set_due_date( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) ) {
+		return;
+	}
+
+	global $wpdb;
+	$query   = $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE post_id = %d AND meta_key = '_wpas_due_date'", $post_id );
+	$results = $wpdb->get_results( $query, OBJECT );
+	if ( $results ) {
+		return false;
+	}
+
+	$due_date = strtotime( '+2 weeks' );
+
+	return $wpdb->insert( $wpdb->postmeta, array(
+		'post_id'    => $post_id,
+		'meta_key'   => '_wpas_due_date',
+		'meta_value' => $due_date,
+	) );
+}
+
+add_action( 'publish_ticket', 'drive_set_due_date' );
