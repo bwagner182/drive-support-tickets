@@ -191,18 +191,22 @@ function drive_get_support_managers() {
  */
 function drive_set_project_manager( $ticket_id ) {
 	
+	// Grab ticket data from database.
 	global $wpdb;
 	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
 	$result = $wpdb->get_results( $query, OBJECT )[0];
 
 	if ( !$result ) {
+		// Ticket doesn't exist.
 		return false;
 	}
 
 	$author = $result->post_author;
 
+	// Get assigned PM from client.
 	$pm = get_user_meta( $author, 'project-manager', true );
 
+	// Insert assigned PM to ticket.
 	$result = $wpdb->insert( $wpdb->postmeta, array(
 		'post_id'    => $ticket_id,
 		'meta_key'   => '_wpas_secondary_assignee',
