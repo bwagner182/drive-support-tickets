@@ -52,7 +52,7 @@ function wpas_drive_custom_fields() {
 			'show_column'     => true,
 			'sortable_column' => true,
 			// 'sanitize'       => wpas_sanitize_due_date(),
-			'html5_pattern'   => '(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d',
+			// 'html5_pattern'   => '(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d',
 			'backend_only'    => true,
 			'capability'      => 'edit_ticket',
 		);
@@ -75,7 +75,10 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 	drive_write_error_log( "Attempting to set due date on ticket id " . $post->ID );
 
-	if ( 'publish' === $new_status && 'publish' !== $old_status && $post->post_type )
+	if ( ( 'publish' === $new_status && 'publish' === $old_status ) || 'ticket' !== $post->post_type ) {
+		drive_write_error_log( "Death" );
+		return false;
+	}
 
 	if ( wp_is_post_revision( $post->ID ) ) {
 		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
@@ -87,16 +90,19 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 	drive_write_error_log( "This post is not a revision. Continuing..." );
 
 	global $wpdb;
-	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = %s", $post->ID );
+	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = " . $post->ID );
 
 	if ( $result ) {
 		drive_write_error_log( "DRIVE EXTENSIONS LOG" );
 		drive_write_error_log( "This ticket already has a due date. Ticket ID " . $post->ID );
 		return;
 	}
-
-	$due_date = strtotime( '+2 weeks', date( "d/m/Y" ) );
+	$today = date( "m/d/Y" );
+	$two_weeks = time() + ( 14 * 24 * 60 * 60 );
+	$due_date = date( 'm/d/Y', $two_weeks );
 	drive_write_error_log( "DRIVE EXTENSIONS LOG" );
+	drive_write_error_log( "Today is " . $today );
+	drive_write_error_log( "Two weeks is " . $two_weeks );
 	drive_write_error_log( "The new due date is: " . $due_date );
 	$result = $wpdb->insert(
 		$wpdb->postmeta,
