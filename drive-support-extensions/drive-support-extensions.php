@@ -80,30 +80,25 @@ function wpas_drive_custom_fields() {
  * @return boolean            Returns true on completion.
  */
 function drive_set_due_date( $ticket_id ) {
-	drive_write_error_log( "Starting process" );
-	drive_write_error_log( "Ticket Number is: " . $ticket_id );
+
 	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
 
 	if ( $result ) {
 		// Ticket has a due date.
-		drive_write_error_log( "Ticket has a due date" );
 		return false;
 	}
 
 	// Set due date for two weeks from today.
-	drive_write_error_log( "Getting due date" );
 	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
-	drive_write_error_log( "Due date: " . $due_date );
 	// Insert new due date into database.
 	$ticket_data = array(
-		'post_id'    => $ticket_id,
+		'ID'    => $ticket_id,
 		'meta_input' => array(
 			'_wpas_due_date' => $due_date,
 		),
 	);
 
-	drive_write_error_log( "Writing to the db." );
-	$result = wp_insert_post( $ticket_data, true );
+	$result = wp_update_post( $ticket_data, true );
 	return $result;
 }
 
@@ -228,13 +223,13 @@ function drive_set_project_manager( $ticket_id ) {
 
 	// Insert assigned PM to ticket.
 	$ticket_data = array(
-		'post_id'    => $ticket_id,
+		'ID'    => $ticket_id,
 		'meta_input' => array(
 			'_wpas_secondary_assignee' => $pm,
 		),
 	);
 
-	return wp_insert_post( $ticket_data, true );
+	return wp_update_post( $ticket_data, true );
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
@@ -278,13 +273,13 @@ function drive_set_developer( $ticket_id ) {
 
 	// Insert assigned PM to ticket.
 	$ticket_data = array(
-		'post_id'    => $ticket_id,
+		'ID'    => $ticket_id,
 		'meta_input' => array(
 			'_wpas_assignee' => $dev_name,
 		),
 	);
 
-	return wp_insert_post( $ticket_data, true );
+	return wp_update_post( $ticket_data, true );
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_developer', 20, 1 );
