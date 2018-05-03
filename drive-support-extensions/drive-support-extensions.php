@@ -79,16 +79,9 @@ function wpas_drive_custom_fields() {
  * @param  object $post       Post object after submission.
  * @return boolean            Returns true on completion.
  */
-function drive_set_due_date( $new_status, $old_status, $post ) {
-	// Check to make sure it's a new ticket.
-	if ( ( 'publish' === $new_status && 'publish' === $old_status ) || 'ticket' !== $post->post_type ) {
-		// Not a ticket or not new.
-		return false;
-	}
+function drive_set_due_date( $ticket_id ) {
 
-	global $wpdb;
-	// Check for a due date.
-	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = " . $post->ID );
+	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
 
 	if ( $result ) {
 		// Ticket has a due date.
@@ -97,21 +90,19 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 
 	// Set due date for two weeks from today.
 	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
-
 	// Insert new due date into database.
-	$result = $wpdb->insert(
-		$wpdb->postmeta,
-		array(
-			'post_id'    => $post->ID,
-			'meta_key'   => '_wpas_due_date',
-			'meta_value' => $due_date,
-		)
+	$ticket_data = array(
+		'ID'    => $ticket_id,
+		'meta_input' => array(
+			'_wpas_due_date' => $due_date,
+		),
 	);
 
+	$result = wp_update_post( $ticket_data, true );
 	return $result;
 }
 
-add_action( 'transition_post_status', 'drive_set_due_date', 20, 3 );
+add_action( 'wpas_tikcet_after_saved', 'drive_set_due_date', 20, 1 );
 
 /**
  * Add custom meta fields for users.
@@ -126,8 +117,8 @@ function drive_custom_user_fields( $user ) {
 			add_user_meta( $user->ID, 'project-manager', '' );
 		}
 
-		if ( ! get_user_meta( $user->ID, 'company-name' ) ) {
-			add_user_meta( $user->ID, 'company-name', '' );
+		if ( ! get_user_meta( $user->ID, 'developer-name' ) ) {
+			add_user_meta( $user->ID, 'developer-name', '' );
 		}
 	}
 	?>
@@ -157,9 +148,9 @@ function drive_custom_user_fields( $user ) {
 				<select name="developer-name">
 					<option value=''></option>
 					<?php
-					$agents = drive_get_support_agents();
+					$agents       = drive_get_support_agents();
 					$selected_dev = get_user_meta( $user->ID, 'developer-name', true );
-					foreach ($agents as $agent ) {
+					foreach ( $agents as $agent ) {
 						?>
 						<option value="<?php echo $agent->ID; ?>" <?php	if ( $agent->ID === $selected_dev) { echo "selected=''"; } ?>><?php echo $agent->user_login; ?></option>
 						<?php
@@ -231,13 +222,14 @@ function drive_set_project_manager( $ticket_id ) {
 	$pm = get_user_meta( $author, 'project-manager', true );
 
 	// Insert assigned PM to ticket.
-	$result = $wpdb->insert( $wpdb->postmeta, array(
-		'post_id'    => $ticket_id,
-		'meta_key'   => '_wpas_secondary_assignee',
-		'meta_value' => $pm,
-	) );
+	$ticket_data = array(
+		'ID'    => $ticket_id,
+		'meta_input' => array(
+			'_wpas_secondary_assignee' => $pm,
+		),
+	);
 
-	return $result;
+	return wp_update_post( $ticket_data, true );
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
@@ -280,11 +272,14 @@ function drive_set_developer( $ticket_id ) {
 	$dev_name = get_user_meta( $author, 'developer-name', true );
 
 	// Insert assigned PM to ticket.
-	$result = $wpdb->insert( $wpdb->postmeta, array(
-		'post_id'    => $ticket_id,
-		'meta_key'   => '_wpas_assignee',
-		'meta_value' => $dev_name,
-	) );
+	$ticket_data = array(
+		'ID'    => $ticket_id,
+		'meta_input' => array(
+			'_wpas_assignee' => $dev_name,
+		),
+	);
 
-	return $result;
+	return wp_update_post( $ticket_data, true );
 }
+
+add_action( 'wpas_tikcet_after_saved', 'drive_set_developer', 20, 1 );
