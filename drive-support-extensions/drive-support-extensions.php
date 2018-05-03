@@ -12,7 +12,7 @@
  * Plugin Name:       Drive Support Extensions
  * Plugin URI:        https://drivesocialmedia.com
  * Description:       Added extensions and fields to extend the funtionality of Awesome support.
- * Version:           0.1.0
+ * Version:           0.3.0
  * Author:            Bret Wagner - Drive Social Media
  * Author URI:        https://drivesocialmedia.com
  * Text Domain:       drive-support-ext
@@ -54,7 +54,7 @@ function wpas_drive_custom_fields() {
 			'show_column'     => true,
 			'sortable_column' => true,
 			'backend_only'    => true,
-			'capability'      => 'delete_ticket',
+			'capability'      => 'assign_ticket',
 		);
 		wpas_add_custom_field( 'due_date', $due_date_args );
 
@@ -72,45 +72,10 @@ function wpas_drive_custom_fields() {
 }
 
 /**
- * Set deault due date for 2 weeks away when submitted by the client
- *
- * @param  string $new_status Status of the post after submission.
- * @param  string $old_status Status of the post prior to submission.
- * @param  object $post       Post object after submission.
- * @return boolean            Returns true on completion.
- */
-function drive_set_due_date( $ticket_id ) {
-	drive_write_error_log( "Starting set due date." );
-	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
-
-	if ( $result ) {
-		// Ticket has a due date.
-		drive_write_error_log( "Ticket has a due date already." );
-		return false;
-	}
-
-	// Set due date for two weeks from today.
-	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
-	// Insert new due date into database.
-	drive_write_error_log( $due_date );
-	$ticket_data = array(
-		'ID'    => $ticket_id,
-		'meta_input' => array(
-			'_wpas_due_date' => $due_date,
-		),
-	);
-
-	$result = wp_update_post( $ticket_data, true );
-	drive_write_error_log( "Result:" );
-	drive_write_error_log( $result );
-	return $result;
-}
-
-add_action( 'wpas_tikcet_after_saved', 'drive_set_due_date', 20, 1 );
-
-/**
  * Add custom meta fields for users.
  *
+ * @since  0.1.0
+ * 
  * @param  object $user User object from WordPress database.
  * @return void         Outputs html to build the fields.
  */
@@ -173,6 +138,8 @@ add_action( 'edit_user_profile', 'drive_custom_user_fields' );
 /**
 * Save custom meta fields.
 *
+* @since  0.1.0
+* 
 * @param  int     $user_id User ID in the database.
 * @return void             No return.
 */
@@ -194,6 +161,9 @@ add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
 
 /**
 * Get a list of the support managers from the database.
+*
+* @since  0.1.0
+* 
 * @return array List of User IDs and their usernames.
 */
 function drive_get_support_managers() {
@@ -211,46 +181,10 @@ function drive_get_support_managers() {
 }
 
 /**
-* Set project manager for client on ticket submission.
-* @param  int     $ticket_id ID of the ticket being created.
-* @return boolean            True on success.
-*/
-function drive_set_project_manager( $ticket_id ) {
-	drive_write_error_log( "Setting project manager." );
-	// Grab ticket data from database.
-	global $wpdb;
-	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
-	$result = $wpdb->get_results( $query, OBJECT )[0];
-
-	if ( !$result ) {
-		// Ticket doesn't exist.
-		return false;
-	}
-
-	$author = $result->post_author;
-
-	// Get assigned PM from client.
-	$pm = get_user_meta( $author, 'project-manager', true );
-
-	// Insert assigned PM to ticket.
-	$ticket_data = array(
-		'ID'    => $ticket_id,
-		'meta_input' => array(
-			'_wpas_secondary_assignee' => $pm,
-		),
-	);
-
-	$result = wp_update_post( $ticket_data, true );
-	drive_write_error_log( "Result:" );
-	drive_write_error_log( $result );
-	return $result;
-}
-
-add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
-
-
-/**
 * Get a list of the support agents from the database.
+*
+* @since  0.1.0
+* 
 * @return array List of User IDs and their usernames.
 */
 function drive_get_support_agents() {
@@ -268,11 +202,14 @@ function drive_get_support_agents() {
 }
 
 /**
-* Set developer for client on ticket submission.
-* @param  int     $ticket_id ID of the ticket being created.
-* @return boolean            True on success.
-*/
-function drive_set_developer( $ticket_id ) {
+ * Set default values for developer, PM and due date after submission.
+ *
+ * @since  0.3.0
+ * @param  int     $ticket_id ID for the ticket that was created.
+ * @return boolean            Returns true on success, false on failure.
+ */
+function drive_set_default_values( $ticket_id ) {
+	// Set Developer
 	drive_write_error_log( "Setting developer for ticket." );
 	// Grab ticket data from database.
 	global $wpdb;
@@ -285,22 +222,63 @@ function drive_set_developer( $ticket_id ) {
 	}
 
 	$author = $result->post_author;
-
+	drive_write_error_log( "Author: " . $author );
 	// Get assigned PM from client.
 	$dev_name = get_user_meta( $author, 'developer-name', true );
+	drive_write_error_log( "Developer ID: " . $dev_name );
 
 	// Insert assigned PM to ticket.
-	$ticket_data = array(
-		'ID'    => $ticket_id,
-		'meta_input' => array(
-			'_wpas_assignee' => $dev_name,
-		),
-	);
-
-	$result = wp_update_post( $ticket_data, true );
-	drive_write_error_log( "Result: " );
+	$result = update_post_meta( $ticket_id, '_wpas_assignee', $dev_name );
+	drive_write_error_log( "Result:" );
 	drive_write_error_log( $result );
-	return $result;
+
+	$results['developer'] = $result;
+	// End set developer
+	
+	// Start set due date
+	drive_write_error_log( "Starting set due date." );
+	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
+
+	if ( $result ) {
+		// Ticket has a due date.
+		drive_write_error_log( "Ticket has a due date already." );
+		return false;
+	}
+
+	// Set due date for two weeks from today.
+	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
+	// Insert new due date into database.
+	drive_write_error_log( $due_date );
+
+	$result = update_post_meta( $ticket_id, '_wpas_due_date', $due_date );
+	drive_write_error_log( "Result:" );
+	drive_write_error_log( $result );
+	$results['due-date'] = $result;
+	// End set due date 
+	
+	// Start set project manager
+	drive_write_error_log( "Setting project manager." );
+	// Grab ticket data from database.
+	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
+	$result = $wpdb->get_results( $query, OBJECT )[0];
+
+	if ( !$result ) {
+		// Ticket doesn't exist.
+		return false;
+	}
+
+	$author = $result->post_author;
+
+	// Get assigned PM from client.
+	$pm = get_user_meta( $author, 'project-manager', true );
+
+	// Insert assigned PM to ticket.
+	$result = update_post_meta( $ticket_id, '_wpas_secondary_assignee', $pm );
+	drive_write_error_log( "Result:" );
+	drive_write_error_log( $result );
+	$results['project-manager'] = $result;
+
+	drive_write_error_log( $results );
 }
 
-add_action( 'wpas_tikcet_after_saved', 'drive_set_developer', 20, 1 );
+add_action( 'wpas_tikcet_after_saved', 'drive_set_default_values', 20, 1 );
