@@ -40,9 +40,12 @@ function drive_write_error_log( $message ) {
 
 add_action( 'plugins_loaded', 'wpas_drive_custom_fields' );
 
-/** Create custom fields for use in Awesome Support Plugin.
+/** 
+ * Create custom fields for use in Awesome Support Plugin.
  *
- * @return void No return, simply create fields.
+ * @since  0.1.0
+ *
+ * @return void  No return, simply create fields.
  */
 function wpas_drive_custom_fields() {
 	if ( function_exists( 'wpas_add_custom_field' ) ) {
@@ -89,11 +92,21 @@ function drive_custom_user_fields( $user ) {
 		if ( ! get_user_meta( $user->ID, 'developer-name' ) ) {
 			add_user_meta( $user->ID, 'developer-name', '' );
 		}
+
+		if ( ! get_user_meta( $user->ID, 'company-names' ) ) {
+			add_user_meta( $user->ID, 'company-names' );
+		}
 	}
 	?>
 	<h3><?php esc_html_e( 'Drive Client Fields' ); ?></h3>
 
 	<table class="form-table">
+		<tr>
+			<th><label for="company-names"><?php esc_html_e( 'Company Name(s)' ); ?></label></th>
+			<td>
+				<input type="text" name="company-names" value="<?php get_user_meta( $iser->ID, 'company-names', true ); ?>" />
+			</td>
+		</tr>
 		<tr>
 			<th><label for="project-manager"><?php esc_html_e( 'Project Manager' ); ?></label></th>
 			<td>
@@ -110,8 +123,6 @@ function drive_custom_user_fields( $user ) {
 					?>
 				</select>
 			</td>
-		</tr>
-		<tr>
 			<th><label for="developer-name"><?php esc_html_e( 'Developer Name' ); ?></label></th>
 			<td>
 				<select name="developer-name">
