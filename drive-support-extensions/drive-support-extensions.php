@@ -94,7 +94,7 @@ function drive_custom_user_fields( $user ) {
 		}
 
 		if ( ! get_user_meta( $user->ID, 'company-names' ) ) {
-			add_user_meta( $user->ID, 'company-names' );
+			add_user_meta( $user->ID, 'company-names', '' );
 		}
 	}
 	?>
@@ -104,7 +104,7 @@ function drive_custom_user_fields( $user ) {
 		<tr>
 			<th><label for="company-names"><?php esc_html_e( 'Company Name(s)' ); ?></label></th>
 			<td>
-				<input type="text" name="company-names" value="<?php get_user_meta( $iser->ID, 'company-names', true ); ?>" />
+				<input type="text" name="company-names" value="<?php 'add-new-user' === $user ? '' : get_user_meta( $user->ID, 'company-names', true ); ?>" />
 			</td>
 		</tr>
 		<tr>
@@ -123,6 +123,8 @@ function drive_custom_user_fields( $user ) {
 					?>
 				</select>
 			</td>
+		</tr>
+		<tr>
 			<th><label for="developer-name"><?php esc_html_e( 'Developer Name' ); ?></label></th>
 			<td>
 				<select name="developer-name">
