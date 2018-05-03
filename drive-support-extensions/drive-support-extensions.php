@@ -161,7 +161,7 @@ function drive_custom_user_fields( $user ) {
 					$selected_dev = get_user_meta( $user->ID, 'developer-name', true );
 					foreach ($agents as $agent ) {
 						?>
-						<option value="<?php echo $agent->ID; ?>" <?php if ( $agent->ID === $selected_dev) { echo "selected=''"; } ?>><?php echo $agent->user_login; ?></option>
+						<option value="<?php echo $agent->ID; ?>" <?php	if ( $agent->ID === $selected_dev) { echo "selected=''"; } ?>><?php echo $agent->user_login; ?></option>
 						<?php
 					}
 					?>
