@@ -85,6 +85,7 @@ function drive_set_due_date( $ticket_id ) {
 
 	if ( $result ) {
 		// Ticket has a due date.
+		drive_write_error_log( "Ticket has a due date already." );
 		return false;
 	}
 
@@ -196,7 +197,7 @@ add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
 * @return array List of User IDs and their usernames.
 */
 function drive_get_support_managers() {
-	drive_write_error_log( "Gettingsupport manager list." );
+	drive_write_error_log( "Getting support manager list." );
 	global $wpdb;
 	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
 		FROM wp_users u, wp_usermeta m
