@@ -54,7 +54,7 @@ function wpas_drive_custom_fields() {
 			'show_column'     => true,
 			'sortable_column' => true,
 			'backend_only'    => true,
-			'capability'      => 'wpas_agent',
+			'capability'      => 'delete_ticket',
 		);
 		wpas_add_custom_field( 'due_date', $due_date_args );
 
@@ -91,6 +91,7 @@ function drive_set_due_date( $ticket_id ) {
 	// Set due date for two weeks from today.
 	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
 	// Insert new due date into database.
+	drive_write_error_log( $due_date );
 	$ticket_data = array(
 		'ID'    => $ticket_id,
 		'meta_input' => array(
@@ -241,7 +242,7 @@ function drive_set_project_manager( $ticket_id ) {
 	$result = wp_update_post( $ticket_data, true );
 	drive_write_error_log( "Result:" );
 	drive_write_error_log( $result );
-	return $result
+	return $result;
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
