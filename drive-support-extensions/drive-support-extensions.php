@@ -80,7 +80,7 @@ function wpas_drive_custom_fields() {
  * @return boolean            Returns true on completion.
  */
 function drive_set_due_date( $ticket_id ) {
-
+	drive_write_error_log( "Starting set due date." );
 	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
 
 	if ( $result ) {
@@ -99,6 +99,8 @@ function drive_set_due_date( $ticket_id ) {
 	);
 
 	$result = wp_update_post( $ticket_data, true );
+	drive_write_error_log( "Result:" );
+	drive_write_error_log( $result );
 	return $result;
 }
 
@@ -170,15 +172,18 @@ add_action( 'edit_user_profile', 'drive_custom_user_fields' );
 * Save custom meta fields.
 *
 * @param  int     $user_id User ID in the database.
-* @return boolean          True on success.
+* @return void             No return.
 */
 function drive_save_custom_user_fields( $user_id ) {
+	drive_write_error_log( "Saving custom user fields." );
 	if ( !current_user_can( 'edit_user', $user_id ) ) {
 		return false;
 	}
 
 	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
 	update_user_meta( $user_id, 'developer-name', $_POST['developer-name'] );
+
+	drive_write_error_log( "Custom user fields saved." );
 }
 
 add_action( 'user_register', 'drive_save_custom_user_fields' );
@@ -190,12 +195,16 @@ add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
 * @return array List of User IDs and their usernames.
 */
 function drive_get_support_managers() {
+	drive_write_error_log( "Gettingsupport manager list." );
 	global $wpdb;
 	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
 		FROM wp_users u, wp_usermeta m
 		WHERE u.ID = m.user_id
 		AND m.meta_key LIKE 'wp_capabilities'
 		AND m.meta_value LIKE '%wpas_support_manager%'", OBJECT_K );
+
+	drive_write_error_log( "Results:" );
+	drive_write_error_log( $results );
 	return $results;
 }
 
@@ -205,7 +214,7 @@ function drive_get_support_managers() {
 * @return boolean            True on success.
 */
 function drive_set_project_manager( $ticket_id ) {
-
+	drive_write_error_log( "Setting project manager." );
 	// Grab ticket data from database.
 	global $wpdb;
 	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
@@ -229,7 +238,10 @@ function drive_set_project_manager( $ticket_id ) {
 		),
 	);
 
-	return wp_update_post( $ticket_data, true );
+	$result = wp_update_post( $ticket_data, true );
+	drive_write_error_log( "Result:" );
+	drive_write_error_log( $result );
+	return $result
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
@@ -240,12 +252,16 @@ add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
 * @return array List of User IDs and their usernames.
 */
 function drive_get_support_agents() {
+	drive_write_error_log( "Getting support agent list." );
 	global $wpdb;
 	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
 		FROM wp_users u, wp_usermeta m
 		WHERE u.ID = m.user_id
 		AND m.meta_key LIKE 'wp_capabilities'
 		AND m.meta_value LIKE '%wpas_agent%'", OBJECT_K );
+
+	drive_write_error_log( "Results:" );
+	drive_write_error_log( $results );
 	return $results;
 }
 
@@ -255,7 +271,7 @@ function drive_get_support_agents() {
 * @return boolean            True on success.
 */
 function drive_set_developer( $ticket_id ) {
-
+	drive_write_error_log( "Setting developer for ticket." );
 	// Grab ticket data from database.
 	global $wpdb;
 	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
@@ -279,7 +295,10 @@ function drive_set_developer( $ticket_id ) {
 		),
 	);
 
-	return wp_update_post( $ticket_data, true );
+	$result = wp_update_post( $ticket_data, true );
+	drive_write_error_log( "Result: " );
+	drive_write_error_log( $result );
+	return $result;
 }
 
 add_action( 'wpas_tikcet_after_saved', 'drive_set_developer', 20, 1 );
