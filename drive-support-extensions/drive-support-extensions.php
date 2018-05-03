@@ -86,9 +86,7 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 		return false;
 	}
 
-	global $wpdb;
-	// Check for a due date.
-	$result = $wpdb->get_var( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_wpas_due_date' AND post_id = " . $post->ID );
+	$result = get_post_meta( $post->ID, '_wpas_due_date', true );
 
 	if ( $result ) {
 		// Ticket has a due date.
@@ -99,15 +97,15 @@ function drive_set_due_date( $new_status, $old_status, $post ) {
 	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
 
 	// Insert new due date into database.
-	$result = $wpdb->insert(
-		$wpdb->postmeta,
-		array(
-			'post_id'    => $post->ID,
+	$ticket_data = array(
+		'post_id'    => $post->ID,
+		'meta_input' => array(
 			'meta_key'   => '_wpas_due_date',
 			'meta_value' => $due_date,
-		)
+		),
 	);
 
+	$result = wp_input_post( $ticket_data );
 	return $result;
 }
 
@@ -126,8 +124,8 @@ function drive_custom_user_fields( $user ) {
 			add_user_meta( $user->ID, 'project-manager', '' );
 		}
 
-		if ( ! get_user_meta( $user->ID, 'company-name' ) ) {
-			add_user_meta( $user->ID, 'company-name', '' );
+		if ( ! get_user_meta( $user->ID, 'developer-name' ) ) {
+			add_user_meta( $user->ID, 'developer-name', '' );
 		}
 	}
 	?>
@@ -157,9 +155,9 @@ function drive_custom_user_fields( $user ) {
 				<select name="developer-name">
 					<option value=''></option>
 					<?php
-					$agents = drive_get_support_agents();
+					$agents       = drive_get_support_agents();
 					$selected_dev = get_user_meta( $user->ID, 'developer-name', true );
-					foreach ($agents as $agent ) {
+					foreach ( $agents as $agent ) {
 						?>
 						<option value="<?php echo $agent->ID; ?>" <?php	if ( $agent->ID === $selected_dev) { echo "selected=''"; } ?>><?php echo $agent->user_login; ?></option>
 						<?php
