@@ -40,19 +40,19 @@ function drive_write_error_log( $message ) {
 
 add_action( 'plugins_loaded', 'wpas_drive_custom_fields' );
 
-/** Create custom fields for use in Awesome Support Plugin. */
+/** Create custom fields for use in Awesome Support Plugin.
+ *
+ * @return void No return, simply create fields.
+ */
 function wpas_drive_custom_fields() {
 	if ( function_exists( 'wpas_add_custom_field' ) ) {
 		$due_date_args = array(
 			'title'           => __( 'Due Date', 'awesome_support' ),
 			'field_type'      => 'date-field',
-			// 'default'         => strtotime( '+2 weeks' ),
 			'required'        => false,
 			'log'             => true,
 			'show_column'     => true,
 			'sortable_column' => true,
-			// 'sanitize'       => wpas_sanitize_due_date(),
-			// 'html5_pattern'   => '(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d',
 			'backend_only'    => true,
 			'capability'      => 'wpas_agent',
 		);
@@ -72,14 +72,15 @@ function wpas_drive_custom_fields() {
 }
 
 /**
- * set deault due date for 2 weeks away when submitted by the client
+ * Set deault due date for 2 weeks away when submitted by the client
+ *
  * @param  string $new_status Status of the post after submission.
  * @param  string $old_status Status of the post prior to submission.
  * @param  object $post       Post object after submission.
  * @return boolean            Returns true on completion.
  */
 function drive_set_due_date( $new_status, $old_status, $post ) {
-	// Check to make sure it's a new ticket
+	// Check to make sure it's a new ticket.
 	if ( ( 'publish' === $new_status && 'publish' === $old_status ) || 'ticket' !== $post->post_type ) {
 		// Not a ticket or not new.
 		return false;
@@ -114,13 +115,12 @@ add_action( 'transition_post_status', 'drive_set_due_date', 20, 3 );
 
 /**
  * Add custom meta fields for users.
+ *
  * @param  object $user User object from WordPress database.
  * @return void         Outputs html to build the fields.
  */
 function drive_custom_user_fields( $user ) {
 	// Register meta field if it doesn't exist.
-	drive_write_error_log( "DRIVE LOG" );
-	drive_write_error_log( $user );
 	if ( 'add-new-user' !== $user ) {
 		if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
 			add_user_meta( $user->ID, 'project-manager', '' );
@@ -131,28 +131,28 @@ function drive_custom_user_fields( $user ) {
 		}
 	}
 	?>
-	<h3><?php esc_html_e( "Drive Client Fields" ); ?></h3>
+	<h3><?php esc_html_e( 'Drive Client Fields' ); ?></h3>
 
 	<table class="form-table">
 		<tr>
-			<th><label for="project-manager"><?php esc_html_e( "Project Manager" ); ?></label></th>
+			<th><label for="project-manager"><?php esc_html_e( 'Project Manager' ); ?></label></th>
 			<td>
 				<select name="project-manager">
 					<option value=""></option>
 					<?php
-						$managers = drive_get_support_managers();
-						$selected = get_user_meta( $user->ID, 'project-manager', true );
-						foreach ( $managers as $manager ) {
-							?>
-							<option value="<?php echo $manager->ID; ?>" <?php if ( $manager->ID === $selected ) { echo "selected=''"; } ?>><?php echo $manager->user_login; ?></option>
-							<?php
-						}
+					$managers = drive_get_support_managers();
+					$selected = get_user_meta( $user->ID, 'project-manager', true );
+					foreach ( $managers as $manager ) {
+						?>
+						<option value="<?php echo $manager->ID; ?>" <?php if ( $manager->ID === $selected ) { echo "selected=''"; } ?>><?php echo $manager->user_login; ?></option>
+						<?php
+					}
 					?>
 				</select>
 			</td>
 		</tr>
 		<tr>
-			<th><label for="developer-name"><?php esc_html_e( "Developer Name" ); ?></label></th>
+			<th><label for="developer-name"><?php esc_html_e( 'Developer Name' ); ?></label></th>
 			<td>
 				<select name="developer-name">
 					<option value=''></option>
@@ -176,10 +176,11 @@ add_action( 'show_user_profile', 'drive_custom_user_fields' );
 add_action( 'edit_user_profile', 'drive_custom_user_fields' );
 
 /**
- * Save custom meta fields.
- * @param  int     $user_id User ID in the database.
- * @return boolean          True on success.
- */
+* Save custom meta fields.
+*
+* @param  int     $user_id User ID in the database.
+* @return boolean          True on success.
+*/
 function drive_save_custom_user_fields( $user_id ) {
 	if ( !current_user_can( 'edit_user', $user_id ) ) {
 		return false;
@@ -194,9 +195,9 @@ add_action( 'personal_options_update', 'drive_save_custom_user_fields' );
 add_action( 'edit_user_profile_update', 'drive_save_custom_user_fields' );
 
 /**
- * Get a list of the support managers from the database.
- * @return array List of User IDs and their usernames.
- */
+* Get a list of the support managers from the database.
+* @return array List of User IDs and their usernames.
+*/
 function drive_get_support_managers() {
 	global $wpdb;
 	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
@@ -208,12 +209,12 @@ function drive_get_support_managers() {
 }
 
 /**
- * Set project manager for client on ticket submission.
- * @param  int     $ticket_id ID of the ticket being created.
- * @return boolean            True on success.
- */
+* Set project manager for client on ticket submission.
+* @param  int     $ticket_id ID of the ticket being created.
+* @return boolean            True on success.
+*/
 function drive_set_project_manager( $ticket_id ) {
-	
+
 	// Grab ticket data from database.
 	global $wpdb;
 	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
@@ -243,9 +244,9 @@ add_action( 'wpas_tikcet_after_saved', 'drive_set_project_manager', 20, 1);
 
 
 /**
- * Get a list of the support agents from the database.
- * @return array List of User IDs and their usernames.
- */
+* Get a list of the support agents from the database.
+* @return array List of User IDs and their usernames.
+*/
 function drive_get_support_agents() {
 	global $wpdb;
 	$results = $wpdb->get_results( "SELECT u.ID, u.user_login
@@ -257,12 +258,12 @@ function drive_get_support_agents() {
 }
 
 /**
- * Set developer for client on ticket submission.
- * @param  int     $ticket_id ID of the ticket being created.
- * @return boolean            True on success.
- */
+* Set developer for client on ticket submission.
+* @param  int     $ticket_id ID of the ticket being created.
+* @return boolean            True on success.
+*/
 function drive_set_developer( $ticket_id ) {
-	
+
 	// Grab ticket data from database.
 	global $wpdb;
 	$query = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE `ID` = %d", $ticket_id );
