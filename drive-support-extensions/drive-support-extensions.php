@@ -12,7 +12,7 @@
  * Plugin Name:       Drive Support Extensions
  * Plugin URI:        https://drivesocialmedia.com
  * Description:       Added extensions and fields to extend the funtionality of Awesome support.
- * Version:           0.3.0
+ * Version:           0.4.0
  * Author:            Bret Wagner - Drive Social Media
  * Author URI:        https://drivesocialmedia.com
  * Text Domain:       drive-support-ext
@@ -240,35 +240,14 @@ function drive_set_default_values( $ticket_id ) {
 	$dev_name = get_user_meta( $author, 'developer-name', true );
 	drive_write_error_log( "Developer ID: " . $dev_name );
 
-	// Insert assigned PM to ticket.
+	// Insert assigned developer to ticket.
 	$result = update_post_meta( $ticket_id, '_wpas_assignee', $dev_name );
 	drive_write_error_log( "Result:" );
 	drive_write_error_log( $result );
 
 	$results['developer'] = $result;
 	// End set developer
-	
-	// Start set due date
-	drive_write_error_log( "Starting set due date." );
-	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
-
-	if ( $result ) {
-		// Ticket has a due date.
-		drive_write_error_log( "Ticket has a due date already." );
-		return false;
-	}
-
-	// Set due date for two weeks from today.
-	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
-	// Insert new due date into database.
-	drive_write_error_log( $due_date );
-
-	$result = update_post_meta( $ticket_id, '_wpas_due_date', $due_date );
-	drive_write_error_log( "Result:" );
-	drive_write_error_log( $result );
-	$results['due-date'] = $result;
-	// End set due date 
-	
+		
 	// Start set project manager
 	drive_write_error_log( "Setting project manager." );
 	// Grab ticket data from database.
@@ -290,8 +269,31 @@ function drive_set_default_values( $ticket_id ) {
 	drive_write_error_log( "Result:" );
 	drive_write_error_log( $result );
 	$results['project-manager'] = $result;
+	// End PM assignment
+	
+	// Start set due date
+	drive_write_error_log( "Starting set due date." );
+	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
+/*
+	if ( $result ) {
+		// Ticket has a due date.
+		drive_write_error_log( "Ticket has a due date already." );
+		return false;
+	}
+*/
+	// Set due date for two weeks from today.
+	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
+	// Insert new due date into database.
+	drive_write_error_log( $due_date );
 
+	$result = update_post_meta( $ticket_id, '_wpas_due_date', $due_date );
+	drive_write_error_log( "Result:" );
+	drive_write_error_log( $result );
+	$results['due-date'] = $result;
+	// End set due date 
 	drive_write_error_log( $results );
+
+	// Need to email newly assigned developer on ticket creation.
 }
 
-add_action( 'wpas_tikcet_after_saved', 'drive_set_default_values', 20, 1 );
+add_action( 'wpas_open_ticket_after', 'drive_set_default_values', 20, 1 );
