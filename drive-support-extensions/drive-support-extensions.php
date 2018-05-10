@@ -84,10 +84,10 @@ function wpas_drive_custom_fields() {
  * @return boolean      Returns false and does not create client fields for non-clients
  */
 function drive_custom_user_fields( $user ) {
-	drive_write_error_log( get_userdata( $user->ID) );
-	$user_role = implode( get_userdata( $user->ID )->roles );
-	drive_write_error_log( 'Trying to edit user with role: ' );
-	drive_write_error_log( $user_role );
+	$user_data = get_userdata( $user->ID );
+	drive_write_error_log( get_userdata( $user_data) );
+	$user_role = implode( $user_data->roles );
+	drive_write_error_log( 'Trying to edit user with role: ' . $user_role );
 	if ( 'wpas_user' !== $user_role ) {
 		// Do nothing.
 		return;
@@ -106,14 +106,16 @@ function drive_custom_user_fields( $user ) {
 			add_user_meta( $user->ID, 'company-names', '' );
 		}
 	}
+
+	$company_names = get_user_meta( $user->ID, 'company-names', true );
 	?>
-	<h3><?php esc_html_e( 'Drive Client Fields' ); ?></h3>
+	<h2 style="margin-top: 2em;"><?php esc_html_e( 'Drive Client Fields' ); ?></h2>
 
 	<table class="form-table">
 		<tr>
 			<th><label for="company-names"><?php esc_html_e( 'Company Name(s)' ); ?></label></th>
 			<td>
-				<input type="text" name="company-names" value="<?php 'add-new-user' === $user ? '' : get_user_meta( $user->ID, 'company-names', true ); ?>" />
+				<input type="text" name="company-names" value="<?php esc_html_e( $company_names ); ?>" />
 			</td>
 		</tr>
 		<tr>
@@ -153,9 +155,67 @@ function drive_custom_user_fields( $user ) {
 	<?
 }
 
-// add_action( 'user_new_form', 'drive_custom_user_fields' );
 add_action( 'show_user_profile', 'drive_custom_user_fields' );
 add_action( 'edit_user_profile', 'drive_custom_user_fields' );
+
+/**
+ * Add custom meta fields for users.
+ *
+ * @since  0.1.0
+ * 
+ * @param  object $user User object from WordPress database.
+ * @return void         Outputs html to build the fields.
+ * @return boolean      Returns false and does not create client fields for non-clients
+ */
+function drive_custom_pm_fields( $user ) {
+	$user_data = get_userdata( $user->ID );
+	drive_write_error_log( get_userdata( $user_data) );
+	$user_role = implode( $user_data->roles );
+	drive_write_error_log( 'Trying to edit user with role: ' . $user_role );
+	if ( 'wpas_support_manager' !== $user_role ) {
+		// Do nothing.
+		return;
+	}
+	// Register meta field if it doesn't exist.
+	if ( 'add-new-user' !== $user ) {
+		if ( ! get_user_meta( $user->ID, 'contact-phone' ) ) {
+			add_user_meta( $user->ID, 'contact-phone', '' );
+		}
+
+		if ( ! get_user_meta( $user->ID, 'profile-image' ) ) {
+			add_user_meta( $user->ID, 'profile-image', '' );
+		}
+
+		drive_write_error_log( 'Profile image: ' . get_user_meta( $user->ID, 'profile-image', true ) );
+		drive_write_error_log( 'Contact phone: ' . get_user_meta( $user->ID, 'contact-phone', true ) );
+
+	}
+
+	$profile_image = get_user_meta( $user->ID, 'profile-image', true );
+	$contact_phone = get_user_meta( $user->ID, 'contact-phone', true );
+
+	?>
+	<h2 style="margin-top: 2em;"><?php esc_html_e( 'Drive Project Manager Fields' ); ?></h2>
+
+	<table class="form-table">
+		<tr>
+			<th><label for="profile-image"><?php esc_html_e( 'Profile Image' ); ?></label></th>
+			<td>
+				<input type="text" name="profile-image" value="<?php esc_html_e( $profile_image ); ?>" />
+			</td>
+		</tr>
+		<tr>
+			<th><label for="contact-phone"><?php esc_html_e( 'Phone Number' ); ?></label></th>
+			<td>
+				<input type="text" name="contact-phone" value="<?php esc_html_e( $contact_phone ); ?>" />
+			</td>
+		</tr>
+	</table>
+	<?
+}
+
+add_action( 'show_user_profile', 'drive_custom_pm_fields' );
+add_action( 'edit_user_profile', 'drive_custom_pm_fields' );
 
 /**
 * Save custom meta fields.
@@ -171,10 +231,21 @@ function drive_save_custom_user_fields( $user_id ) {
 		return false;
 	}
 
-	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
-	update_user_meta( $user_id, 'developer-name', $_POST['developer-name'] );
+	$user_role = implode( get_userdata( $user_id )->roles );
+	// Save client data if user being edited is a client
+	if ( 'wpas_user' === $user_role ) {
+		update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
+		update_user_meta( $user_id, 'developer-name', $_POST['developer-name'] );
+		update_user_meta( $user_id, 'company-names', $_POST['company-names'] );
 
-	drive_write_error_log( "Custom user fields saved." );
+		drive_write_error_log( "Custom Client fields saved." );
+	} elseif ( 'wpas_support_manager' === $user_role ) {
+		// Double check that the uploaded image is actually an image.
+		update_user_meta( $user_id, 'profile-image', $_POST['profile-image'] );
+		// Need to sanitize phone number after user input.
+		update_user_meta( $user_id, 'contact-phone', $_POST['contact-phone'] );
+		drive_write_error_log( 'Custom PM fields saved' );
+	}
 }
 
 add_action( 'user_register', 'drive_save_custom_user_fields' );
@@ -303,6 +374,10 @@ function drive_set_default_values( $ticket_id ) {
 	drive_write_error_log( $results );
 
 	// Need to email newly assigned developer on ticket creation.
+	drive_write_error_log ( 'Ticket ID: ' . $ticket_id . "\nDeveloper: "  . $dev_name );
+	wpas_notify_assignment( $ticket_id, $dev_name );
+
+	// Need to email PM on ticket creation.
 }
 
 add_action( 'wpas_open_ticket_after', 'drive_set_default_values', 20, 1 );
