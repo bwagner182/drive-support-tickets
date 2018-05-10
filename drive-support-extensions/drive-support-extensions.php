@@ -81,8 +81,17 @@ function wpas_drive_custom_fields() {
  * 
  * @param  object $user User object from WordPress database.
  * @return void         Outputs html to build the fields.
+ * @return boolean      Returns false and does not create client fields for non-clients
  */
 function drive_custom_user_fields( $user ) {
+	drive_write_error_log( get_userdata( $user->ID) );
+	$user_role = implode( get_userdata( $user->ID )->roles );
+	drive_write_error_log( 'Trying to edit user with role: ' );
+	drive_write_error_log( $user_role );
+	if ( 'wpas_user' !== $user_role ) {
+		// Do nothing.
+		return;
+	}
 	// Register meta field if it doesn't exist.
 	if ( 'add-new-user' !== $user ) {
 		if ( ! get_user_meta( $user->ID, 'project-manager' ) ) {
@@ -144,7 +153,7 @@ function drive_custom_user_fields( $user ) {
 	<?
 }
 
-add_action( 'user_new_form', 'drive_custom_user_fields' );
+// add_action( 'user_new_form', 'drive_custom_user_fields' );
 add_action( 'show_user_profile', 'drive_custom_user_fields' );
 add_action( 'edit_user_profile', 'drive_custom_user_fields' );
 
