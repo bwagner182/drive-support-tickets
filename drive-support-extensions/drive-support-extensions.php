@@ -244,17 +244,18 @@ function drive_set_default_values( $ticket_id ) {
 	}
 
 	$author = $result->post_author;
-	drive_write_error_log( "Author: " . $author );
+	drive_write_error_log( "Author: " . get_user_meta( $author, 'nickname', true ) );
 	// Get assigned PM from client.
-	$dev_name = get_user_meta( $author, 'developer-name', true );
-	drive_write_error_log( "Developer ID: " . $dev_name );
+	$dev_id = get_user_meta( $author, 'developer-name', true );
+	drive_write_error_log( "Developer: " . get_user_meta( $dev_id, 'nickname', true ) );
 
 	// Insert assigned developer to ticket.
-	$result = update_post_meta( $ticket_id, '_wpas_assignee', $dev_name );
-	drive_write_error_log( "Result:" );
-	drive_write_error_log( $result );
+	drive_write_error_log( 'wpas_assign_ticket( ' . $ticket_id . ', ' . $dev_id . ', true )' );
+	$result = wpas_assign_ticket( $ticket_id, $dev_id, true );
+	// $result = update_post_meta( $ticket_id, '_wpas_assignee', $dev_name );
+	drive_write_error_log( "Result: " . ( true !== $result ? "Success" : "Failure, from functions-post.php->wpas_assign_ticket \$current is the same as \$agent_id " . $dev_id ) );
 
-	$results['developer'] = $result;
+	$results['developer'] = ( true !== $result ? "Success" : "Failure, from finctions-post.php->wpas_assign_ticket \$current is the same as \$agent_id " . $dev_id );
 	// End set developer
 		
 	// Start set project manager
@@ -275,34 +276,31 @@ function drive_set_default_values( $ticket_id ) {
 
 	// Insert assigned PM to ticket.
 	$result = update_post_meta( $ticket_id, '_wpas_secondary_assignee', $pm );
-	drive_write_error_log( "Result:" );
-	drive_write_error_log( $result );
-	$results['project-manager'] = $result;
+	drive_write_error_log( "Project Manager: " . get_user_meta( $pm, 'nickname', true ) );
+	drive_write_error_log( false !== $result ? "Success" : "Failure" );
+	$results['project-manager'] = ( false !== $result ? "Success" : "Failure" );
 	// End PM assignment
 	
 	// Start set due date
 	drive_write_error_log( "Starting set due date." );
 	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
-/*
-	if ( $result ) {
-		// Ticket has a due date.
-		drive_write_error_log( "Ticket has a due date already." );
-		return false;
-	}
-*/
+
 	// Set due date for two weeks from today.
 	$due_date = date( 'Y-m-d', time() + ( 14 * 24 * 60 * 60 ) );
 	// Insert new due date into database.
 	drive_write_error_log( $due_date );
 
 	$result = update_post_meta( $ticket_id, '_wpas_due_date', $due_date );
-	drive_write_error_log( "Result:" );
-	drive_write_error_log( $result );
-	$results['due-date'] = $result;
+	drive_write_error_log( "Result: " . ( false !== $result ? "Success" : "Failure" ) );
+	// drive_write_error_log( $result );
+	$results['due-date'] = ( false !== $result ? "Success" : "Failure" );
 	// End set due date 
 	drive_write_error_log( $results );
 
 	// Need to email newly assigned developer on ticket creation.
+	drive_write_error_log ( 'Ticket ID: ' . $ticket_id . "\nDeveloper: "  . get_user_meta( $dev_id, 'nickname', true ) );
+
+	// Need to email PM on ticket creation.
 }
 
 add_action( 'wpas_open_ticket_after', 'drive_set_default_values', 20, 1 );
