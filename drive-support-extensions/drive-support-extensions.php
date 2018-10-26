@@ -106,6 +106,12 @@ function drive_custom_user_fields( $user ) {
 			add_user_meta( $user->ID, 'company-names', '' );
 		}
 	}
+
+	if ( !get_user_meta( $user->ID, 'company-names', true ) || 'add_new_user' === $user ) {
+		$company = '';
+	} else {
+		$company = get_user_meta( $user->ID, 'company-names', true );
+	}
 	?>
 	<h3><?php esc_html_e( 'Drive Client Fields' ); ?></h3>
 
@@ -113,7 +119,7 @@ function drive_custom_user_fields( $user ) {
 		<tr>
 			<th><label for="company-names"><?php esc_html_e( 'Company Name(s)' ); ?></label></th>
 			<td>
-				<input type="text" name="company-names" value="<?php 'add-new-user' === $user ? '' : get_user_meta( $user->ID, 'company-names', true ); ?>" />
+				<input type="text" name="company-names" value="<?php echo $company; ?>" />
 			</td>
 		</tr>
 		<tr>
@@ -171,6 +177,7 @@ function drive_save_custom_user_fields( $user_id ) {
 		return false;
 	}
 
+	update_user_meta( $user_id, 'company-names', $_POST['company-names'] );
 	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
 	update_user_meta( $user_id, 'developer-name', $_POST['developer-name'] );
 
