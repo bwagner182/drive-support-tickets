@@ -50,27 +50,47 @@ add_action( 'plugins_loaded', 'wpas_drive_custom_fields' );
 function wpas_drive_custom_fields() {
 	if ( function_exists( 'wpas_add_custom_field' ) ) {
 		$due_date_args = array(
-			'title'           => __( 'Due Date', 'awesome_support' ),
-			'field_type'      => 'date-field',
-			'required'        => false,
-			'log'             => true,
-			'show_column'     => true,
-			'sortable_column' => true,
-			'backend_only'    => true,
-			'capability'      => 'assign_ticket',
+			'title'           		=> __( 'Due Date', 'awesome_support' ),
+			'field_type'      		=> 'date-field',
+			'required'        		=> false,
+			'log'             		=> true,
+			'show_column'     		=> true,
+			'sortable_column' 		=> true,
+			'backend_only'    		=> true,
+			'capability'      		=> 'assign_ticket',
 		);
 		wpas_add_custom_field( 'due_date', $due_date_args );
 
 		$url_args = array(
-			'title'              => __( 'Page URL', 'awesome_support' ),
-			'field_type'         => 'url',
-			'placeholder'        => 'https://example.com/page-name/',
-			'required'           => false,
-			'show_column'        => false,
-			'desc'               => __( 'Please enter the url for the page that needs editing.', 'awesome_support' ),
-			'show_frontend_list' => false,
+			'title'              	=> __( 'Page URL', 'awesome_support' ),
+			'field_type'         	=> 'url',
+			'placeholder'        	=> 'https://example.com/page-name/',
+			'required'           	=> false,
+			'show_column'        	=> false,
+			'desc'               	=> __( 'Please enter the url for the page that needs editing.', 'awesome_support' ),
+			'show_frontend_list' 	=> false,
 		);
-		wpas_add_custom_field( 'page_url', $url_args );
+		// wpas_add_custom_field( 'page_url', $url_args );
+		
+		$priority_check = array(
+			'title'					=> __( 'Does this stop you being able to work?', 'awesome_support' ),
+			'field_type'			=> 'select',
+			'placeholder'			=> 'workflow stoppage?',
+			'required'				=> true,
+			'show_column'			=> false,
+			'desc'					=> __( 'Answer honestly whether this issue stops you from being able to work today.', 'awesome_support' ),
+			'show_frontend_list'	=> true,
+			'options'				=> array(
+				'no'		=> 'No',
+				'yes'		=> 'Yes',
+			),
+			'show_column'			=> true,
+			'sortable_column'		=> true,
+			'capability'			=> 'assign_ticket',
+			'show_frontend_list'	=> false,
+		);
+
+		wpas_add_custom_field( 'work_stoppage', $priority_check );
 	}
 }
 
@@ -107,22 +127,22 @@ function drive_custom_user_fields( $user ) {
 		}
 	}
 
-	if ( !get_user_meta( $user->ID, 'company-names', true ) || 'add_new_user' === $user ) {
-		$company = '';
-	} else {
-		$company = get_user_meta( $user->ID, 'company-names', true );
-	}
+	// if ( !get_user_meta( $user->ID, 'company-names', true ) || 'add_new_user' === $user ) {
+	// 	$company = '';
+	// } else {
+	// 	$company = get_user_meta( $user->ID, 'company-names', true );
+	// }
 	?>
-	<h3><?php esc_html_e( 'Drive Client Fields' ); ?></h3>
+	<h3><?php esc_html_e( 'Drive Fields' ); ?></h3>
 
 	<table class="form-table">
-		<tr>
+		<?php /* ?><tr>
 			<th><label for="company-names"><?php esc_html_e( 'Company Name(s)' ); ?></label></th>
 			<td>
 				<input type="text" name="company-names" value="<?php echo $company; ?>" />
 			</td>
-		</tr>
-		<tr>
+		</tr><?php */?>
+		<?php /* ?><tr>
 			<th><label for="project-manager"><?php esc_html_e( 'Project Manager' ); ?></label></th>
 			<td>
 				<select name="project-manager">
@@ -139,8 +159,9 @@ function drive_custom_user_fields( $user ) {
 				</select>
 			</td>
 		</tr>
+		<?php */ ?>
 		<tr>
-			<th><label for="developer-name"><?php esc_html_e( 'Developer Name' ); ?></label></th>
+			<th><label for="developer-name"><?php esc_html_e( 'IT Agent' ); ?></label></th>
 			<td>
 				<select name="developer-name">
 					<option value=''></option>
@@ -177,7 +198,7 @@ function drive_save_custom_user_fields( $user_id ) {
 		return false;
 	}
 
-	update_user_meta( $user_id, 'company-names', $_POST['company-names'] );
+	// update_user_meta( $user_id, 'company-names', $_POST['company-names'] );
 	update_user_meta( $user_id, 'project-manager', $_POST['project-manager'] );
 	update_user_meta( $user_id, 'developer-name', $_POST['developer-name'] );
 
@@ -262,9 +283,9 @@ function drive_set_default_values( $ticket_id ) {
 	// $result = update_post_meta( $ticket_id, '_wpas_assignee', $dev_name );
 	drive_write_error_log( "Result: " . ( true !== $result ? "Success" : "Failure, from functions-post.php->wpas_assign_ticket \$current is the same as \$agent_id " . $dev_id ) );
 
-	$results['developer'] = ( true !== $result ? "Success" : "Failure, from finctions-post.php->wpas_assign_ticket \$current is the same as \$agent_id " . $dev_id );
+	$results['developer'] = ( true !== $result ? "Success" : "Failure, from functions-post.php->wpas_assign_ticket \$current is the same as \$agent_id " . $dev_id );
 	// End set developer
-		
+	/*	
 	// Start set project manager
 	drive_write_error_log( "Setting project manager." );
 	// Grab ticket data from database.
@@ -287,7 +308,7 @@ function drive_set_default_values( $ticket_id ) {
 	drive_write_error_log( false !== $result ? "Success" : "Failure" );
 	$results['project-manager'] = ( false !== $result ? "Success" : "Failure" );
 	// End PM assignment
-	
+	*/
 	// Start set due date
 	drive_write_error_log( "Starting set due date." );
 	$result = get_post_meta( $ticket_id, '_wpas_due_date', true );
@@ -308,6 +329,15 @@ function drive_set_default_values( $ticket_id ) {
 	drive_write_error_log ( 'Ticket ID: ' . $ticket_id . "\nDeveloper: "  . get_user_meta( $dev_id, 'nickname', true ) );
 
 	// Need to email PM on ticket creation.
+	
+	// Set priority based on work stoppage
+	if ( $results['work-stoppage'] == 'yes' ) {
+		$query = $wpdb->prepare( "INSERT INTO $wpdb->term_relationships (`object_id`, `term_taxonomy_id`, `term_order`) VALUES ( %d, '22', '0')", $ticket_id );
+
+		$result = $wpdb->get_results( $query, OBJECT )[0];
+		drive_write_error_log( $result );
+	}
+	
 }
 
 add_action( 'wpas_open_ticket_after', 'drive_set_default_values', 20, 1 );
